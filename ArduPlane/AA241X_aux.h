@@ -1,3 +1,5 @@
+#ifndef AA241X_AUX_H
+#define AA241X_AUX_H
 
 #define ENERGY_LIMIT   0.450*7.4*3600 // max energy in Joules allowed for the mission.  Above this energy consumption, the camera function stops returning snapshots
 
@@ -128,3 +130,5 @@ struct snapshot{
 static struct snapshot takeASnapshot(){
   return takeSnapshot(X_position, Y_position, -Z_position_Baro, gpsOK, mission_energy_consumed);
 }
+
+#endif
