@@ -33,10 +33,10 @@ static float      delta_t_sum = 0; // Total sum of time since start of AUTO loop
 
 /**** State Variables ****/
 static float altitudeCommand  = 50;   // 50 meters is default altitude
-static float airspeedCommand  = 14;   // 14 meters / second is default airspeed
+static float airspeedCommand  = 9;   // 9 meters / second is default airspeed
 static float headingCommand   = 0;    // Go North
 static float rollCommand      = 0;    // Keep Level
-static float pitchCommand     = .122; // 7 degrees pitch
+static float pitchCommand     = .075; // 4.5 degrees pitch
 
 /*************************** Mechanical Limit Variables ***********************************************
 
@@ -70,8 +70,8 @@ static float bankAngleMax = .52;  // 30 degrees max
 static float bankAngleMin = -.52;  // -30 degrees min
 static float pitchAngleMax = .21;   // 12 degrees pitch
 static float pitchAngleMin = -0.122; // -7 degrees pitch
-static float airspeedCommandMax = 20; // 20 meters / second
-static float airspeedCommandMin = 9;  // 9 meters / second
+static float airspeedCommandMax = 15; // 15 meters / second
+static float airspeedCommandMin = 5;  // 5 meters / second
 
 /**** PID Loops ****/
 PidController rollController241X(RLL_2_SRV_P, // Proportional Gain
@@ -225,21 +225,21 @@ static void AA241X_AUTO_FastLoop(void)
   if (controlMode == ROLL_STABILIZE_MODE)
   {
     // Keep Roll angle controlled based on RC pilot input (should be zero when stick is in center)
-      rollCommand = -(RC_roll-RC_Roll_Trim)*0.01*PI;
+      rollCommand = (RC_roll-RC_Roll_Trim)*0.01*PI;
       rollController241X.SetReference(rollCommand);
-      rollControllerOut = -rollController241X.Step(delta_t, roll);
+      rollControllerOut = rollController241X.Step(delta_t, roll);
   }else if (controlMode == STABILIZE_MODE)
   {
     // Keep Roll and Pitch angles controlled based on RC pilot input
       // Roll Commands
-      rollCommand = -(RC_roll-RC_Roll_Trim)*0.01*PI;
+      rollCommand = (RC_roll-RC_Roll_Trim)*0.01*PI;
       rollController241X.SetReference(rollCommand);
-      rollControllerOut = -rollController241X.Step(delta_t, roll);
+      rollControllerOut = rollController241X.Step(delta_t, roll);
       
       // Pitch Commands
-      pitchCommand = -(RC_pitch - RC_Pitch_Trim)*0.01*PI/4.0 + (7.0/180.0)*PI;
+      pitchCommand = (RC_pitch - RC_Pitch_Trim)*0.01*PI/4.0 + (7.0/180.0)*PI;
       pitchController241X.SetReference(pitchCommand);
-      pitchControllerOut = -pitchController241X.Step(delta_t, pitch);
+      pitchControllerOut = pitchController241X.Step(delta_t, pitch);
       
       // Rudder Commands
       // rudderCommand = 
@@ -247,10 +247,20 @@ static void AA241X_AUTO_FastLoop(void)
   {
     // Maintain Heading, RC pilot commands offset from heading that was saved
       // Heading Commands
-      if (abs(RC_roll - RC_Roll_Trim) > 5)
+      if (fabs(RC_roll - RC_Roll_Trim) > 5)
       {
         // Allow breakout room just in case RC_Roll_Trim is not DEAD on
-        headingCommand += headingCommand*0.00174*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz
+        headingCommand += 0.01*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz
+        
+        // Check radian range of heading command
+        if(headingCommand > 2*PI)
+        {
+          headingCommand -= 2*PI;
+        }else if(headingCommand < 0)
+        {
+          headingCommand += 2*PI;
+        }
+        
         headingController241X.SetReference(headingCommand);
       }
       headingControllerOut = headingController241X.Step(delta_t, ground_course);
@@ -258,16 +268,26 @@ static void AA241X_AUTO_FastLoop(void)
 
       // Roll Commands
       rollController241X.SetReference(headingControllerOut);
-      rollControllerOut = -rollController241X.Step(delta_t, roll); 
+      rollControllerOut = rollController241X.Step(delta_t, roll); 
       
   }else if (controlMode == FBW_MODE)
   {
     // Maintain heading, altitude, and airspeed RC pilot commands offsets from saved initial conditions
       // Heading Commands
-      if (abs(RC_roll - RC_Roll_Trim) > 5)
-      {
+      if ( fabs(RC_roll - RC_Roll_Trim) > 5 )
+      {      
         // Allow breakout room just in case RC_Roll_Trim is not DEAD on
-        headingCommand += headingCommand*0.00174*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz
+        headingCommand += 0.01*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz 0.00174
+        
+        // Check radian range of heading command
+        if(headingCommand > 2*PI)
+        {
+          headingCommand -= 2*PI;
+        }else if(headingCommand < 0)
+        {
+          headingCommand += 2*PI;
+        }
+        
         headingController241X.SetReference(headingCommand);
       }
       headingControllerOut = headingController241X.Step(delta_t, ground_course);
@@ -275,7 +295,7 @@ static void AA241X_AUTO_FastLoop(void)
 
       // Roll Commands
       rollController241X.SetReference(headingControllerOut);
-      rollControllerOut = -rollController241X.Step(delta_t, roll);
+      rollControllerOut = rollController241X.Step(delta_t, roll);
       
       // Altitude Commands
       float altitude = 1; // Default altitude
@@ -284,9 +304,9 @@ static void AA241X_AUTO_FastLoop(void)
       else
         altitude = -Z_position_Baro;
       
-      if(abs(RC_pitch - RC_Pitch_Trim) > 5)
+      if(fabs(RC_pitch - RC_Pitch_Trim) > 5)
       {
-        altitudeCommand += altitudeCommand*0.04*(RC_pitch - RC_Pitch_Trim)/RC_Pitch_Trim; // 2 m/s change rate based on 50 Hz
+        altitudeCommand += 0.04*(RC_pitch - RC_Pitch_Trim)/RC_Pitch_Trim; // 2 m/s change rate based on 50 Hz
         altitudeController241X.SetReference(altitudeCommand);
       }
       altitudeControllerOut = altitudeController241X.Step(delta_t, altitude);
@@ -294,18 +314,18 @@ static void AA241X_AUTO_FastLoop(void)
       
       // Pitch Commands
       pitchController241X.SetReference(altitudeControllerOut);
-      pitchControllerOut = -pitchController241X.Step(delta_t, pitch);
+      pitchControllerOut = pitchController241X.Step(delta_t, pitch);
       
       // Airspeed Commands
-      //airspeedCommand += airspeedCommand*0.1*(RC_throttle - RC_throttle_old);
-      //RC_throttle_old = RC_throttle;
+      airspeedCommand += 0.1*(RC_throttle - RC_throttle_old);
+      RC_throttle_old = RC_throttle;
       Limit(airspeedCommand, airspeedCommandMax, airspeedCommandMin);
       airspeedController241X.SetReference(airspeedCommand);
       airspeedControllerOut = airspeedController241X.Step(delta_t, Air_speed);
   }
   
   // Update Roll Servo Command  
-  if(controlMode == ROLL_STABILIZE_MODE ||controlMode == STABILIZE_MODE || controlMode == FBW_MODE || controlMode == HEADING_HOLD_MODE)
+  if(controlMode == ROLL_STABILIZE_MODE || controlMode == STABILIZE_MODE || controlMode == FBW_MODE || controlMode == HEADING_HOLD_MODE)
   {
     float rollOut    = RC_Roll_Trim + rollControllerOut;
     Limit(rollOut, rollMax, rollMin);
@@ -427,17 +447,22 @@ static void AA241X_AUTO_SlowLoop(void)
   hal.console->printf_P(PSTR("Bank Angle Current: %f \n"), roll);  
   */
   
-  hal.console->printf_P(PSTR("\n Airspeed Value: %f \n"), Air_speed);
-  hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);
-  hal.console->printf_P(PSTR("Airspeed Error: %f \n"), AirspeedControllerSummary.error);
+  //hal.console->printf_P(PSTR("\n Airspeed Value: %f \n"), Air_speed);
+  //hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);
+  //hal.console->printf_P(PSTR("Airspeed Error: %f \n"), AirspeedControllerSummary.error);
   //hal.console->printf_P(PSTR("Airspeed Integrated Error: %f \n"), AirspeedControllerSummary.i_error);
   //hal.console->printf_P(PSTR("Airspeed Derivative Error: %f \n"), AirspeedControllerSummary.d_error);
-  hal.console->printf_P(PSTR("Airspeed Proportional Term: %f \n"), AirspeedControllerSummary.p_term);
+  //hal.console->printf_P(PSTR("Airspeed Proportional Term: %f \n"), AirspeedControllerSummary.p_term);
   //hal.console->printf_P(PSTR("Airspeed Integral Term: %f \n"), AirspeedControllerSummary.i_term);
   //hal.console->printf_P(PSTR("Airspeed Derivative Term: %f \n"), AirspeedControllerSummary.d_term);
-  hal.console->printf_P(PSTR("Airspeed Output: %f \n"), AirspeedControllerSummary.output);
-  hal.console->printf_P(PSTR("Throttle Trim: %f \n"), RC_Throttle_Trim);
-  hal.console->printf_P(PSTR("Airspeed Controller Out: %f \n"), airspeedControllerOut);
+  //hal.console->printf_P(PSTR("Airspeed Output: %f \n"), AirspeedControllerSummary.output);
+  //hal.console->printf_P(PSTR("Throttle Trim: %f \n"), RC_Throttle_Trim);
+  //hal.console->printf_P(PSTR("Airspeed Controller Out: %f \n"), airspeedControllerOut);
+  
+  hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
+  hal.console->printf_P(PSTR("Altitude Command: %f \n"), altitudeCommand);
+  hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);  
+  //hal.console->printf_P(PSTR("fabs(RC_roll - RC_Roll_Trim): %f \n"), fabs(RC_roll - RC_Roll_Trim) );
 
 };
 

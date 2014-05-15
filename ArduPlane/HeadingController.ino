@@ -23,10 +23,10 @@ float HeadingController::Step(float delta_t, float input_var)
   
   if(error >= PI)
   {
-    error -= PI;
+    error = error - 2*PI;
   }else if (error <= - PI)
   {
-    error += 2*PI;
+    error = error + 2*PI;
   } 
    
   // Calculate Running Integral of Error
