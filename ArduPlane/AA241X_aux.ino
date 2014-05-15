@@ -192,7 +192,7 @@ static void update_AA241X_flight_variables(void) {
     Y_position     = sin(bearing)*dist;
     Z_position_GPS = -((float)(gps.location().alt * 10UL)/1000.0- CENTER_LAGUNITA_ALT); // altitude in MSL
   
-    ground_speed  = ((float) gps.ground_speed())/100.0; 
+    ground_speed  = ((float) gps.ground_speed()); 
     ground_course = (((float) gps.ground_course_cd())/100.0)*PI/180;
   
     X_velocity     = cos(ground_course)*ground_speed;
@@ -209,14 +209,14 @@ static void update_AA241X_flight_variables(void) {
   } 
   
   // Compute acceleration
-//  accelerometer_reading = imu.get_accel();
-//  NED_Gravity.x = 0;
-//  NED_Gravity.y = 0;
-//  NED_Gravity.z = 9.80665;
-//  Body_Gravity  = NED_to_Body(NED_Gravity);
-//  accel_x       = accelerometer_reading.x + Body_Gravity.x;
-//  accel_y       = accelerometer_reading.y + Body_Gravity.y;
-//  accel_z       = accelerometer_reading.z + Body_Gravity.z;
+  accelerometer_reading = ins.get_accel();
+  NED_Gravity.x = 0;
+  NED_Gravity.y = 0;
+  NED_Gravity.z = 9.80665;
+  Body_Gravity  = NED_to_Body(NED_Gravity);
+  accel_x       = accelerometer_reading.x + Body_Gravity.x;
+  accel_y       = accelerometer_reading.y + Body_Gravity.y;
+  accel_z       = accelerometer_reading.z + Body_Gravity.z;
   
   
   // Read RC signals
