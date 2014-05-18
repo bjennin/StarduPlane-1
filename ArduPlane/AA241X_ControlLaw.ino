@@ -25,6 +25,7 @@ static uint32_t   STABILIZE_MODE = 2;
 static uint32_t   HEADING_HOLD_MODE = 3;
 static uint32_t   FBW_MODE = 4;
 static uint32_t   ATT_HOLD = 5;
+static uint32_t   WAYPOINT_NAV = 6;
 static uint32_t   controlMode = 1; // Determine automatic control mode
 
 /**** Time Variables ****/
@@ -212,6 +213,11 @@ static void AA241X_AUTO_FastLoop(void)
       pitchCommand = (THETA_COMMAND/180.0)*PI;
     }else if(MODE_SELECT > 4.5 && MODE_SELECT < 5.5){
       controlMode = ATT_HOLD;
+    }else if(MODE_SELECT > 5.5 && MODE_SELECT < 6.5){
+      controlMode = WAYPOINT_NAV;
+      
+      // Mission Planner based pitch command until trim settings determined
+      pitchCommand = (THETA_COMMAND/180.0)*PI;
     }
     
     // Set RC old values to trim state to capture deltas
@@ -335,7 +341,7 @@ static void AA241X_AUTO_FastLoop(void)
       if ( fabs(RC_roll - RC_Roll_Trim) > 5)
       {      
         // Allow breakout room just in case RC_Roll_Trim is not DEAD on
-        rollCommand += 0.02*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz 0.00174
+        rollCommand += 0.017*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz 0.00174
       }
       
       // Roll Commands
@@ -351,6 +357,23 @@ static void AA241X_AUTO_FastLoop(void)
       // Pitch Commands
       pitchController241X.SetReference(pitchCommand);
       pitchControllerOut = pitchController241X.Step(delta_t, pitch);
+  }else if (controlMode == WAYPOINT_NAV)
+  {
+    // This mode requires that headingCommand be updated and within 0 to 2PI
+    
+    // headingCommand should be updated by the waypoint nav functions called in the medium loop  
+    headingController241X.SetReference(headingCommand);
+    
+    // Get Bank Angle command to track heading
+    headingControllerOut = headingController241X.Step(delta_t, ground_course);
+    Limit(headingControllerOut, bankAngleMax, bankAngleMin);
+
+    // Roll Commands
+    rollController241X.SetReference(headingControllerOut);
+    rollControllerOut = rollController241X.Step(delta_t, roll);
+    
+    
+    
   }
   
   // Update Roll Servo Command  
@@ -404,20 +427,23 @@ static void AA241X_AUTO_FastLoop(void)
 
 };
 
-
-
-
-
-
 // *****   AA241X Medium Loop - @ ~10Hz  *****  //
-static void AA241X_AUTO_MediumLoop(void){
+static void AA241X_AUTO_MediumLoop(void)
+{
+  // Time between function calls
+  float delta_t = (CPU_time_ms - Last_AUTO_stampTime_ms); // Get delta time between AUTO_FastLoop calls  
+  
+  // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
+  if (delta_t > 100)
+  {
+    // Your initialization stuff for the medium frequency loop here
+  }
+  
   // YOUR CODE HERE
-  
-
-
-  
-  
-  
+  if (controlMode == WAYPOINT_NAV)
+  {
+    headingCommand = 0.0;//Jerry's function
+  }
   
 };
 
