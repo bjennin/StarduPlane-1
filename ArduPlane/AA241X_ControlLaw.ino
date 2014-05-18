@@ -28,6 +28,16 @@ static uint32_t   ATT_HOLD = 5;
 static uint32_t   WAYPOINT_NAV = 6;
 static uint32_t   controlMode = 1; // Determine automatic control mode
 
+/**** Mission Plan ****/
+static uint32_t   missionPlan = 1;  // Determine the mission type
+static uint32_t   STATIC_ROUTE_1 = 1;
+static uint32_t   STATIC_ROUTE_2 = 2;
+static uint32_t   STATIC_ROUTE_3 = 3;
+static uint32_t   STATIC_ROUTE_4 = 4;
+
+static uint32_t   DYNAMIC_ROUTE_1 = 1;
+static uint32_t   DYNAMIC_ROUTE_2 = 2;
+
 /**** Time Variables ****/
 static uint32_t   numCalls    = 0;    // Number of times the AUTO loop has been called
 static float      delta_t_avg = 0; // Average value of delta_t
@@ -122,8 +132,8 @@ HeadingController headingController241X(HEAD_2_SRV_P, // Proportional Gain
                                         5);           // Maximum Derivative Term
                                     
 PidController altitudeController241X(ALT_HOLD_P,  // Proportional Gain
-                                     ALT_HOLD_I,  // Integral Gain
-                                     ALT_HOLD_D,  // Derivative Gain
+                                     0.0,//ALT_HOLD_I,  // Integral Gain
+                                     0.0,//ALT_HOLD_D,  // Derivative Gain
                                      25,           // Maximum Controller Output
                                      1,            // Maximum Integral Error
                                      3,            // Maximum Derivative Error
@@ -182,7 +192,7 @@ static void AA241X_AUTO_FastLoop(void)
     rudderController241X.Initialize(RUD_2_SRV_P, RUD_2_SRV_I, RUD_2_SRV_D);
     airspeedController241X.Initialize(SPD_2_SRV_P, SPD_2_SRV_I, SPD_2_SRV_D);
     headingController241X.Initialize(HEAD_2_SRV_P, HEAD_2_SRV_I, HEAD_2_SRV_D);
-    altitudeController241X.Initialize(ALT_HOLD_P, ALT_HOLD_I, ALT_HOLD_D);
+    altitudeController241X.Initialize(ALT_HOLD_P, 0.0 /*ALT_HOLD_I*/ , 0.0 /*ALT_HOLD_D*/ );
     
     // Save all initial settings
     if(gpsOK == true){
@@ -357,7 +367,8 @@ static void AA241X_AUTO_FastLoop(void)
       // Pitch Commands
       pitchController241X.SetReference(pitchCommand);
       pitchControllerOut = pitchController241X.Step(delta_t, pitch);
-  }else if (controlMode == WAYPOINT_NAV)
+  }
+  else if (controlMode == WAYPOINT_NAV)
   {
     // This mode requires that headingCommand be updated and within 0 to 2PI
     
@@ -372,8 +383,11 @@ static void AA241X_AUTO_FastLoop(void)
     rollController241X.SetReference(headingControllerOut);
     rollControllerOut = rollController241X.Step(delta_t, roll);
     
-    
-    
+    // Pitch Commands
+    pitchCommand = (RC_pitch - RC_Pitch_Trim)*0.01*PI/4.0 + (THETA_COMMAND/180.0)*PI;
+    pitchController241X.SetReference(pitchCommand);
+    pitchControllerOut = pitchController241X.Step(delta_t, pitch);
+        
   }
   
   // Update Roll Servo Command  

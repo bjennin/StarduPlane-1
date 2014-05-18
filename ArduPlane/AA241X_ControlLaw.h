@@ -75,12 +75,12 @@
 #define AA241X_18_NAME     "AA241_Alt_P" 
 #define AA241X_18_DEFAULT  1.0 
 // My parameter 19
-#define ALT_HOLD_I         g.aa241x_19
-#define AA241X_19_NAME     "AA241_Alt_I" 
-#define AA241X_19_DEFAULT  0.0
+#define MISSION_PLAN       g.aa241x_19
+#define AA241X_19_NAME     "AA241_Msn_Pln" 
+#define AA241X_19_DEFAULT  1.0
 // My parameter 20
-#define ALT_HOLD_D         g.aa241x_20
-#define AA241X_20_NAME     "AA241_Alt_D" 
-#define AA241X_20_DEFAULT  0.0 
+#define ROUTE_NUMBER       g.aa241x_20
+#define AA241X_20_NAME     "AA241_Rte_Num" 
+#define AA241X_20_DEFAULT  1.0 
 
 #endif  /* AA241X_CONTROLLAW_H */
