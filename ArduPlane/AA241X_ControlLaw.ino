@@ -24,6 +24,7 @@ static uint32_t   ROLL_STABILIZE_MODE = 1;
 static uint32_t   STABILIZE_MODE = 2;
 static uint32_t   HEADING_HOLD_MODE = 3;
 static uint32_t   FBW_MODE = 4;
+static uint32_t   ATT_HOLD = 5;
 static uint32_t   controlMode = 1; // Determine automatic control mode
 
 /**** Time Variables ****/
@@ -36,7 +37,7 @@ static float altitudeCommand  = 50;   // 50 meters is default altitude
 static float airspeedCommand  = 9;   // 9 meters / second is default airspeed
 static float headingCommand   = 0;    // Go North
 static float rollCommand      = 0;    // Keep Level
-static float pitchCommand     = .075; // 4.5 degrees pitch
+static float pitchCommand     = (THETA_COMMAND/180.0)*PI; //.075; // 4.5 degrees pitch
 
 /*************************** Mechanical Limit Variables ***********************************************
 
@@ -206,6 +207,11 @@ static void AA241X_AUTO_FastLoop(void)
       controlMode = HEADING_HOLD_MODE;
     }else if(MODE_SELECT > 3.5 && MODE_SELECT < 4.5){
       controlMode = FBW_MODE;
+      
+      // Mission Planner based pitch command rather than hard coded up top
+      pitchCommand = (THETA_COMMAND/180.0)*PI;
+    }else if(MODE_SELECT > 4.5 && MODE_SELECT < 5.5){
+      controlMode = ATT_HOLD;
     }
     
     // Set RC old values to trim state to capture deltas
@@ -237,7 +243,7 @@ static void AA241X_AUTO_FastLoop(void)
       rollControllerOut = rollController241X.Step(delta_t, roll);
       
       // Pitch Commands
-      pitchCommand = (RC_pitch - RC_Pitch_Trim)*0.01*PI/4.0 + (7.0/180.0)*PI;
+      pitchCommand = (RC_pitch - RC_Pitch_Trim)*0.01*PI/4.0 + (THETA_COMMAND/180.0)*PI;
       pitchController241X.SetReference(pitchCommand);
       pitchControllerOut = pitchController241X.Step(delta_t, pitch);
       
@@ -277,7 +283,7 @@ static void AA241X_AUTO_FastLoop(void)
       if ( fabs(RC_roll - RC_Roll_Trim) > 5 )
       {      
         // Allow breakout room just in case RC_Roll_Trim is not DEAD on
-        headingCommand += 0.01*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz 0.00174
+        headingCommand += 0.025*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz 0.00174
         
         // Check radian range of heading command
         if(headingCommand > 2*PI)
@@ -323,9 +329,32 @@ static void AA241X_AUTO_FastLoop(void)
       airspeedController241X.SetReference(airspeedCommand);
       airspeedControllerOut = airspeedController241X.Step(delta_t, Air_speed);
   }
+  else if (controlMode == ATT_HOLD)
+  {
+      // Hold Roll Angle
+      if ( fabs(RC_roll - RC_Roll_Trim) > 5)
+      {      
+        // Allow breakout room just in case RC_Roll_Trim is not DEAD on
+        rollCommand += 0.02*(RC_roll - RC_Roll_Trim)/RC_Roll_Trim; // .0872 rad/s change rate based on 50 Hz 0.00174
+      }
+      
+      // Roll Commands
+      rollController241X.SetReference(rollCommand);
+      rollControllerOut = rollController241X.Step(delta_t, roll);
+      
+      // Hold Pitch Angle
+      if ( fabs(RC_pitch - RC_Pitch_Trim) > 5)
+      {
+        pitchCommand += 0.01*(RC_pitch - RC_Pitch_Trim)/RC_Pitch_Trim; // .0872 rad/s change rate based on 50 Hz 0.00174
+      }
+      
+      // Pitch Commands
+      pitchController241X.SetReference(pitchCommand);
+      pitchControllerOut = pitchController241X.Step(delta_t, pitch);
+  }
   
   // Update Roll Servo Command  
-  if(controlMode == ROLL_STABILIZE_MODE || controlMode == STABILIZE_MODE || controlMode == FBW_MODE || controlMode == HEADING_HOLD_MODE)
+  if(controlMode == ROLL_STABILIZE_MODE || controlMode == STABILIZE_MODE || controlMode == FBW_MODE || controlMode == HEADING_HOLD_MODE || controlMode == ATT_HOLD)
   {
     float rollOut    = RC_Roll_Trim + rollControllerOut;
     Limit(rollOut, rollMax, rollMin);
@@ -337,7 +366,7 @@ static void AA241X_AUTO_FastLoop(void)
   }
   
   // Update Pitch Servo Command
-  if(controlMode == STABILIZE_MODE || controlMode == FBW_MODE)
+  if(controlMode == STABILIZE_MODE || controlMode == FBW_MODE || controlMode == ATT_HOLD)
   {
     float pitchOut   = RC_Pitch_Trim + pitchControllerOut;
     Limit(pitchOut, pitchMax, pitchMin);
@@ -349,7 +378,7 @@ static void AA241X_AUTO_FastLoop(void)
   }
 
   // Update Rudder Servo Command
-  if(controlMode == STABILIZE_MODE || controlMode == HEADING_HOLD_MODE || controlMode == FBW_MODE)
+  if(controlMode == STABILIZE_MODE || controlMode == HEADING_HOLD_MODE || controlMode == FBW_MODE || controlMode == ATT_HOLD)
   {
     float rudderOut  = RC_Rudder_Trim + rudderControllerOut;
     Limit(rudderOut, rudderMax, rudderMin);
@@ -459,11 +488,12 @@ static void AA241X_AUTO_SlowLoop(void)
   //hal.console->printf_P(PSTR("Throttle Trim: %f \n"), RC_Throttle_Trim);
   //hal.console->printf_P(PSTR("Airspeed Controller Out: %f \n"), airspeedControllerOut);
   
-  hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
-  hal.console->printf_P(PSTR("Altitude Command: %f \n"), altitudeCommand);
-  hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);  
+  //hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
+  //hal.console->printf_P(PSTR("Altitude Command: %f \n"), altitudeCommand);
+  //hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);  
   //hal.console->printf_P(PSTR("fabs(RC_roll - RC_Roll_Trim): %f \n"), fabs(RC_roll - RC_Roll_Trim) );
-
+  hal.console->printf_P(PSTR("pitchCommand: %f \n"), pitchCommand);
+  hal.console->printf_P(PSTR("rollCommand: %f \n"), rollCommand);
 };
 
 /**** Limit function to not exceed mechanical limits of the servos ****/

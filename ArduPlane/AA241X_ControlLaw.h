@@ -7,9 +7,9 @@
 #define AA241X_1_NAME     "AA241_FLT_MODE" // Don't change AA241X_1_NAME ! Replace my_paramName1 with whateve name you want to see on the Mission Planner GCS 
 #define AA241X_1_DEFAULT  1.0            // replace 10.0 with whatever default value you wante to this parameter to have, when reloading the code 
 // My parameter 2
-#define MODE_BIT_1         g.aa241x_2
-#define AA241X_2_NAME     "AA241_BIT_1" 
-#define AA241X_2_DEFAULT  0 
+#define THETA_COMMAND     g.aa241x_2
+#define AA241X_2_NAME     "AA241_THETA" 
+#define AA241X_2_DEFAULT  5.0 
 // My parameter 3
 #define RLL_2_SRV_P       g.aa241x_3
 #define AA241X_3_NAME     "AA241_Roll_P" 
