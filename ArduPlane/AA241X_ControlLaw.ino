@@ -146,7 +146,12 @@ float RC_pitch_old = 0;
 float RC_throttle_old = 0;
 float RC_roll_old = 0;
 float RC_rudder_old = 0;
-  
+
+/**** Waypoint Navigation ****/
+uint32_t Ndim = 2;
+uint32_t Nwp = 0;
+float **waypoints;
+
 // These functions are executed when control mode is in AUTO
 // Please read AA241X_aux.h for all necessary definitions and interfaces
 
@@ -436,7 +441,81 @@ static void AA241X_AUTO_MediumLoop(void)
   // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
   if (delta_t > 100)
   {
+    // Clear waypoints
+    for (uint32_t i=0; i<Nwp; i++) {
+      delete[] waypoints[i]; waypoints[i] = NULL;
+    }
+    
+    // Initialize route from mission planner
+    if (routeNumber == STATIC_ROUTE_1) {
+      // Specify Waypoints
+      Nwp = 3;
+      for (uint32_t i=0; i<Nwp; i++) {
+        waypoints[i] = new float[Ndim];
+      }
+      
+    
+    // Initialize route object and pass waypoints
+    
     // Your initialization stuff for the medium frequency loop here
+    
+  }
+  
+  // heading = waypoint.step
+  
+  // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
+  if (delta_t > 100)
+  {
+    // Just switched to AUTO, initialize all controller loops
+    rollController241X.Initialize(RLL_2_SRV_P, RLL_2_SRV_I, RLL_2_SRV_D);
+    pitchController241X.Initialize(PTCH_2_SRV_P, PTCH_2_SRV_I, PTCH_2_SRV_D);
+    rudderController241X.Initialize(RUD_2_SRV_P, RUD_2_SRV_I, RUD_2_SRV_D);
+    airspeedController241X.Initialize(SPD_2_SRV_P, SPD_2_SRV_I, SPD_2_SRV_D);
+    headingController241X.Initialize(HEAD_2_SRV_P, HEAD_2_SRV_I, HEAD_2_SRV_D);
+    altitudeController241X.Initialize(ALT_HOLD_P, ALT_HOLD_I, ALT_HOLD_D);
+    
+    // Save all initial settings
+    if(gpsOK == true){
+      altitudeCommand = -Z_position_GPS;
+      altitudeController241X.SetReference(altitudeCommand);
+    }else{
+      altitudeCommand = -Z_position_Baro;
+      altitudeController241X.SetReference(altitudeCommand);
+    }
+    
+    headingCommand = ground_course;
+    headingController241X.SetReference(headingCommand);
+    
+    airspeedCommand = Air_speed;
+    airspeedController241X.SetReference(airspeedCommand);
+    
+    // Determine control mode from bits in parameter list
+    if(MODE_SELECT > .5 && MODE_SELECT < 1.5){
+      controlMode = ROLL_STABILIZE_MODE;
+    }else if(MODE_SELECT > 1.5 && MODE_SELECT < 2.5){
+      controlMode = STABILIZE_MODE;
+    }else if(MODE_SELECT > 2.5 && MODE_SELECT < 3.5){
+      controlMode = HEADING_HOLD_MODE;
+    }else if(MODE_SELECT > 3.5 && MODE_SELECT < 4.5){
+      controlMode = FBW_MODE;
+      
+      // Mission Planner based pitch command rather than hard coded up top
+      pitchCommand = (THETA_COMMAND/180.0)*PI;
+    }else if(MODE_SELECT > 4.5 && MODE_SELECT < 5.5){
+      controlMode = ATT_HOLD;
+    }else if(MODE_SELECT > 5.5 && MODE_SELECT < 6.5){
+      controlMode = WAYPOINT_NAV;
+      
+      // Mission Planner based pitch command until trim settings determined
+      pitchCommand = (THETA_COMMAND/180.0)*PI;
+    }
+    
+    // Set RC old values to trim state to capture deltas
+    RC_pitch_old = RC_Pitch_Trim;
+    RC_roll_old    = RC_Roll_Trim;
+    RC_rudder_old   = RC_Rudder_Trim;
+    RC_throttle_old = RC_Throttle_Trim;
+    
   }
   
   // YOUR CODE HERE
