@@ -6,39 +6,53 @@
 #include "RouteManager.h"
 
 // Constructor for the RouteManager class
-RouteManager::RouteManager(float route)
-              : mRoute(route)
-{
-  Initialize();
-}
+RouteManager::RouteManager() {}
 
 // Initialize the RouteManager
-void RouteManager::Initialize(void)
-{
-  // I think things like initial state evaluation of the A/C and should be taken care of here
-  // There's a chance that we start way off from our initial first waypoint, how do we handle that
-  
-  return;
-}
-
-// Perform a step of the routine to determine waypoint capture and give commands
-float RouteManager::Step(float &headingCommand, float &altitudeCommand, float &airspeedCommand)
-{
-  // First, determine proximity of aircraft to waypoint
-  
-  // If the proximity criteria are met (radius or line), make sure the heading is +/- 90 degrees from waypoint to next waypoint
-  
-  // Handle waypoint capture
-}
-
-// Clear the current route
-void RouteManager::ClearRoute(void)
-{
-  return;
-}
+void RouteManager::Initialize(uint32_t routeNumber) {
+  // Create route based on specified route number
+  this->routeNumber = routeNumber;
+  if (routeNumber == TURN_15DEG) {
+    // Initialize route
+    uint32_t Nwp = 3;        // Number of waypoints
+    route.Initialize(Nwp);
     
-// Set a new route
-void RouteManager::SetRoute(void)
-{
-  return;
+    // Add waypoints (Waypoint number, x position, y position)
+    route.AddWaypoint(0,  150.0, -100.0);
+    route.AddWaypoint(1,    0.0, -100.0);
+    route.AddWaypoint(2, -150.0, -100.0 + 150.0*tan(15*PI/180));
+    
+    // Compute waypoint headings for route
+    route.ComputeWaypointHeadings();
+  }
+  else if (routeNumber == TURN_45DEG) 
+  {
+    // Initialize route
+    uint32_t Nwp = 3;        // Number of waypoints
+    route.Initialize(Nwp);
+    
+    // Add waypoints (Waypoint number, x position, y position)
+    route.AddWaypoint(0, 100.0, -150.0);
+    route.AddWaypoint(1, -50.0,    0.0);
+    route.AddWaypoint(2, -50.0,  150.0);
+    
+    // Compute waypoint headings for route
+    route.ComputeWaypointHeadings();
+  }
 }
+
+// Get heading command from specified route
+float RouteManager::GetHeadingCommand() {
+  // Compute heading
+  uint32_t route_complete_flag = 0;
+  float headingCommand = route.ComputeHeadingCommand(route_complete_flag);
+  
+  // Reinitialize route if route is complete
+  if (route_complete_flag == 1) {
+    Initialize(routeNumber);
+  }
+  return headingCommand;
+}
+
+// Destructor for the RouteManager class
+RouteManager::~RouteManager() {}

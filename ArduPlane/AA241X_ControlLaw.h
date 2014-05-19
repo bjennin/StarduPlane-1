@@ -75,12 +75,12 @@
 #define AA241X_18_NAME     "AA241_Alt_P" 
 #define AA241X_18_DEFAULT  1.0 
 // My parameter 19
-#define MISSION_PLAN       g.aa241x_19
-#define AA241X_19_NAME     "AA241_Msn_Pln" 
+#define ROUTE_NUMBER       g.aa241x_19
+#define AA241X_19_NAME     "AA241_Rte_Num" 
 #define AA241X_19_DEFAULT  1.0
 // My parameter 20
-#define ROUTE_NUMBER       g.aa241x_20
-#define AA241X_20_NAME     "AA241_Rte_Num" 
-#define AA241X_20_DEFAULT  1.0 
+#define ROUTE_P            g.aa241x_20
+#define AA241X_20_NAME     "AA241_Rte_P" 
+#define AA241X_20_DEFAULT  2.0
 
 #endif  /* AA241X_CONTROLLAW_H */
