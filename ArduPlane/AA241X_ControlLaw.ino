@@ -28,8 +28,8 @@ static uint32_t   ATT_HOLD = 5;
 static uint32_t   WAYPOINT_NAV = 6;
 static uint32_t   controlMode = 1; // Determine automatic control mode
 
-/**** Mission Plan ****/
-static uint32_t   missionPlan = 1;  // Determine the mission type
+/**** Mission Plan Variables ****/
+static uint32_t   routeNumber = 1;  // Determine the route number
 static uint32_t   STATIC_ROUTE_1 = 1;
 static uint32_t   STATIC_ROUTE_2 = 2;
 static uint32_t   STATIC_ROUTE_3 = 3;
