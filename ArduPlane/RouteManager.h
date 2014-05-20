@@ -1,43 +1,24 @@
 #ifndef ROUTE_MANAGER_H
 #define ROUTE_MANAGER_H
 
-#include "Waypoint.h"
+#include "Route.h"
 
-// PID Controller Class Definition
+// Route Manager Class Definition
 class RouteManager
 {
-  public:    
-    // Constructor
-    RouteManager(float route);
+  protected:
+    // Route Number
+    uint32_t routeNumber;
+    static const uint32_t TURN_15DEG = 1;
+    static const uint32_t TURN_45DEG = 2;
     
-    // Initialization Routine
-    void Initialize(void);
-    
-    // Step the route manager to determine if a waypoint has been captured
-    float Step(float &headingCommand, float &altitudeCommand, float &airspeedCommand);
-    
-    // Clear the current route
-    void ClearRoute(void);
-    
-    // Set a new route
-    void SetRoute(void);
-    
- private:
-    float mRoute; // The current route to fly
-    
+    // Route Information
+    Route route;
+  
+  public:
+    RouteManager();                            // Constructor
+    void Initialize(uint32_t routeNumber);     // Initialization Routine
+    float GetHeadingCommand();                 // Get heading command from specified route
+    ~RouteManager();                           // Destructor
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif /* PID_CONTROLLER_H */
+#endif /* ROUTE_MANAGER_H */

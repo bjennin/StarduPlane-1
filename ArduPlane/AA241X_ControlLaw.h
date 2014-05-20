@@ -67,16 +67,16 @@
 #define AA241X_16_NAME     "AA241_Rud_I" 
 #define AA241X_16_DEFAULT  0.0 
 // My parameter 17
-#define RUD_2_SRV_D        g.aa241x_17
-#define AA241X_17_NAME     "AA241_Rud_D" 
-#define AA241X_17_DEFAULT  0.0 
+#define POSITION_ERROR     g.aa241x_17
+#define AA241X_17_NAME     "AA241_Pos_Err" 
+#define AA241X_17_DEFAULT  10.0 
 // My parameter 18
 #define ALT_HOLD_P         g.aa241x_18
 #define AA241X_18_NAME     "AA241_Alt_P" 
 #define AA241X_18_DEFAULT  1.0 
 // My parameter 19
-#define CROSS_TRACK_P       g.aa241x_19
-#define AA241X_19_NAME     "AA241_CsTrk_P" 
+#define ROUTE_P            g.aa241x_19
+#define AA241X_19_NAME     "AA241_Rte_P" 
 #define AA241X_19_DEFAULT  1.0
 // My parameter 20
 #define ROUTE_NUMBER       g.aa241x_20
