@@ -11,15 +11,6 @@
 /**** Helper Function Prototypes ****/
 static void       Limit(float &variable, float maximum, float minimum);
 
-static int8_t     my_signed_8_bit_variable = 10;  // integer numbers between -128 and 127
-static uint8_t    my_unsigned_8_bit_variable = 10;  // positive integer numbers between 0 and 255
-
-static int16_t    my_signed_16_bit_variable = 10;  // integer numbers between −32768 and 32767
-static uint16_t   my_unsigned_16_bit_variable = 10;  // positive integer numbers between 0 and 65535
-
-static int32_t    my_signed_32_bit_variable = 10;  // integer numbers between −2147483648 and 2147483647
-static uint32_t   my_unsigned_32_bit_variable = 10;  // positive integer numbers between 0 and 4294967295
-
 /**** Control Mode ****/
 static uint32_t   ROLL_STABILIZE_MODE = 1;
 static uint32_t   STABILIZE_MODE = 2;
@@ -29,21 +20,13 @@ static uint32_t   ATT_HOLD = 5;
 static uint32_t   WAYPOINT_NAV = 6;
 static uint32_t   controlMode = 1; // Determine automatic control mode
 
-/**** Mission Plan Variables ****/
-static uint32_t   routeNumber = 1;  // Determine the route number
-static uint32_t   STATIC_ROUTE_1 = 1;
-static uint32_t   STATIC_ROUTE_2 = 2;
-static uint32_t   STATIC_ROUTE_3 = 3;
-static uint32_t   STATIC_ROUTE_4 = 4;
-
-static uint32_t   DYNAMIC_ROUTE_1 = 1;
-static uint32_t   DYNAMIC_ROUTE_2 = 2;
+/**** Waypoint Navigation ****/
+static const uint32_t Ndim = 2;
+static const uint32_t Nwp = 3;
+static uint32_t iwp = 0;
+static float waypoints[Ndim][Nwp];
+static float Hwp[Nwp];
 //RouteManager routeManager;
-
-/**** Time Variables ****/
-static uint32_t   numCalls    = 0;    // Number of times the AUTO loop has been called
-static float      delta_t_avg = 0; // Average value of delta_t
-static float      delta_t_sum = 0; // Total sum of time since start of AUTO loop
 
 /**** State Variables ****/
 static float altitudeCommand  = 50;   // 50 meters is default altitude
@@ -182,12 +165,7 @@ static void AA241X_AUTO_FastLoop(void)
   
   // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
   if (delta_t > 100)
-  {
-    // Reset Average of delta_t
-    delta_t_avg = 0;
-    delta_t_sum = 0;
-    numCalls    = 0;
-    
+  { 
     // Just switched to AUTO, initialize all controller loops
     rollController241X.Initialize(RLL_2_SRV_P, RLL_2_SRV_I, RLL_2_SRV_D);
     pitchController241X.Initialize(PTCH_2_SRV_P, PTCH_2_SRV_I, PTCH_2_SRV_D);
@@ -239,11 +217,6 @@ static void AA241X_AUTO_FastLoop(void)
     RC_throttle_old = RC_Throttle_Trim;
     
   }
-  
-  // Time Related Tracking
-  delta_t_sum += delta_t;
-  numCalls    += 1;
-  delta_t_avg  = delta_t_sum/numCalls;
   
   // Determine Inner Loop Commands Based on Control Mode
   if (controlMode == ROLL_STABILIZE_MODE)
@@ -447,33 +420,80 @@ static void AA241X_AUTO_MediumLoop(void)
   // Time between function calls
   float delta_t = (CPU_time_ms - Last_AUTO_stampTime_ms); // Get delta time between AUTO_FastLoop calls  
   
-  
   // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
   if (delta_t > 100)
   {
-    // Determine route number from bits in parameter list
-    if (ROUTE_NUMBER > 0.5 && ROUTE_NUMBER < 1.5) 
-    {
-      routeNumber = 1;
-    }
-    else if (ROUTE_NUMBER > 1.5 && ROUTE_NUMBER < 2.5) 
-    {
-      routeNumber = 2;
+    // Initialize waypoint data (45 degree route)
+    waypoints[0][0] = 100.0;  waypoints[0][1] = -150.0;
+    waypoints[1][0] = -50.0;  waypoints[1][1] = 0.0;
+    waypoints[2][0] = -50.0;  waypoints[2][1] = 150.0;
+    
+    // Compute waypoint headings
+    float dx = waypoints[0][0] - X_position;
+    float dy = waypoints[0][1] - Y_position;
+    Hwp[0] = atan2(dy,dx);
+    for (uint32_t i=1; i<Nwp; i++) {
+      dx = waypoints[i][0] - waypoints[i-1][0];
+      dy = waypoints[i][1] - waypoints[i-1][1];
+      Hwp[i] = atan2(dy,dx);
     }
     
-    // Initialize route
-    //routeManager.Initialize(routeNumber);
+    // Set waypoint iterator
+    iwp = 0;
   }
   
   // Determine heading command based on specified route and current position
   if (controlMode == WAYPOINT_NAV) {
     if (gpsOK == true)
     {
+      // Compute heading (UAV to waypoint)
+      float dx = waypoints[iwp][0] - X_position;
+      float dy = waypoints[iwp][1] - Y_position;
+      float Huav = atan2(dy,dx);
+        
+      // Go to next waypoint if current waypoint is found
+      float pos_error = sqrt(dx*dx + dy*dy);
+      hal.console->printf_P(PSTR("Position Error: %f \n"), pos_error);
+      if (pos_error <= POSITION_ERROR) {
+        iwp++;
+      }
+      
+      // If all waypoints complete, restart route
+      if (iwp == Nwp+1) {
+        iwp = 0;
+        dx = waypoints[0][0] - X_position;
+        dy = waypoints[0][1] - Y_position;
+        Hwp[0] = atan2(dy,dx);
+      }
+        
+      // Compute heading (UAV to waypoint)
+      dx = waypoints[iwp][0] - X_position;
+      dy = waypoints[iwp][1] - Y_position;
+      Huav = atan2(dy,dx);
+        
+      // Compute heading error (rad)
+      float Herr = fabs(Huav - Hwp[iwp]);
+        
+      // Determine shortest angle and compute heading command
+      if (Herr < (2*PI - Herr)) {
+        headingCommand = Hwp[iwp] + copysignf(1.0, Huav - Hwp[iwp])*ROUTE_P*Herr;
+      }
+      else {
+        Herr = 2*PI - Herr;
+        headingCommand = Hwp[iwp] - copysignf(1.0, Huav - Hwp[iwp])*ROUTE_P*Herr;
+      }
+        
+      // Check radian range of heading command
+      if(headingCommand > 2*PI) {
+        headingCommand -= 2*PI;
+      }
+      else if(headingCommand < 0) {
+        headingCommand += 2*PI;
+      }
       //headingCommand = routeManager.GetHeadingCommand();
       hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
     }
   }
-  
 };
 
 
@@ -489,7 +509,6 @@ static void AA241X_AUTO_SlowLoop(void)
   controller_summary HeadingControllerSummary = headingController241X.GetControllerSummary();    
   controller_summary AirspeedControllerSummary = airspeedController241X.GetControllerSummary();    
   
-  hal.console->printf_P(PSTR("\n Avg dT: %f \n"), delta_t_avg);
   hal.console->printf_P(PSTR("\n Control Mode: %lu \n"), controlMode);
   
   
