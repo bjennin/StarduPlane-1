@@ -3,27 +3,34 @@
 #include "defines.h"
 #include "AA241X_ControlLaw.h"
 #include "AA241X_aux.h"
-#include "RouteManager.h"
+//#include "RouteManager.h"
+#include "Route.h"
 
 // Constructor for the Route class
-Route::Route() {}
+Route::Route(void) {}
 
 // Initialize the RouteManager
-void Route::Initialize(uint32_t Nwp) {
-  // Clear waypoints
-  for (uint32_t i=0; i<this->Nwp; i++) {
-    delete[] waypoints[i]; waypoints[i] = NULL;
-  }
+void Route::Initialize(uint32_t Nwp)
+{
+  
+  // Clear any previous waypoints
+  this->ClearWaypointData();
   
   // Initialize waypoints
   this->Nwp = Nwp;
-  for (uint32_t i=0; i<Nwp; i++) {
+  
+  waypoints = new float*[this->Nwp];
+  
+  for (uint32_t i=0; i < (this->Nwp); i++)
+  {
     waypoints[i] = new float[Ndim];
   }
   
   // Set default route
-  for (uint32_t i=0; i<Nwp; i++) {
-    for (uint32_t j=0; i<Ndim; i++) {
+  for (uint32_t i=0; i < (this->Nwp); i++)
+  {
+    for (uint32_t j=0; j < Ndim; j++)
+    {
       waypoints[i][j] = 0.0;
     }
   }
@@ -39,9 +46,7 @@ void Route::AddWaypoint(uint32_t i, float x, float y) {
 }
 
 // Compute waypoint headings from specified waypoints
-void Route::ComputeWaypointHeadings() {
-  // Clear waypoint headings
-  delete[] Hwp; Hwp = NULL;
+void Route::ComputeWaypointHeadings(void) {
   
   // Initialize and compute waypoint headings
   Hwp = new float[Nwp];
@@ -64,8 +69,8 @@ float Route::ComputeHeadingCommand(uint32_t &route_complete_flag) {
   
   // Go to next waypoint if current waypoint is found
   float pos_error = sqrt(dx*dx + dy*dy);
-
-  //hal.console->printf_P(PSTR("\n pos_error: %f \n"), pos_error);
+  
+  hal.console->printf_P(PSTR("Position Error: %f \n"), pos_error);
 
   if (pos_error <= POSITION_ERROR) {
     iwp++;
@@ -105,12 +110,28 @@ float Route::ComputeHeadingCommand(uint32_t &route_complete_flag) {
   return Hcom;
 }
 
-// Destructor for the Route class
-Route::~Route() {
+
+void Route::ClearWaypointData(void)
+{
   // Clear waypoints
-  for (uint32_t i=0; i<Nwp; i++) {
+  for (uint32_t i = 0; i < this->Nwp; i++)
+  {
     delete[] waypoints[i]; waypoints[i] = NULL;
   }
+  delete[] waypoints; waypoints = NULL;
+  
+  // Clear waypoint headings
+  delete[] Hwp; Hwp = NULL;
+}
+
+// Destructor for the Route class
+Route::~Route(void) {
+  // Clear waypoints
+  for (uint32_t i=0; i<Nwp; i++)
+  {
+    delete[] waypoints[i]; waypoints[i] = NULL;
+  }
+  delete[] waypoints; waypoints = NULL;
   
   // Clear waypoint headings
   delete[] Hwp; Hwp = NULL;

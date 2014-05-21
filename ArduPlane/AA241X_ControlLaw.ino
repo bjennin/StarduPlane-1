@@ -6,7 +6,7 @@
 #include "AA241X_aux.h"
 #include "PID_Controller.h"
 #include "HeadingController.h"
-#include "RouteManager.h"
+//#include "RouteManager.h"
 
 /**** Helper Function Prototypes ****/
 static void       Limit(float &variable, float maximum, float minimum);
@@ -38,7 +38,7 @@ static uint32_t   STATIC_ROUTE_4 = 4;
 
 static uint32_t   DYNAMIC_ROUTE_1 = 1;
 static uint32_t   DYNAMIC_ROUTE_2 = 2;
-RouteManager routeManager;
+//RouteManager routeManager;
 
 /**** Time Variables ****/
 static uint32_t   numCalls    = 0;    // Number of times the AUTO loop has been called
@@ -105,7 +105,7 @@ PidController pitchController241X(PTCH_2_SRV_P, // Proportional Gain
                                   3,            // Maximum Derivative Error
                                   5,            // Maximum Integral Term
                                   5);           // Maximum Derivative Term
-                                  
+/*                                  
 PidController rudderController241X(RUD_2_SRV_P,  // Proportional Gain
                                    RUD_2_SRV_I,  // Integral Gain
                                    0.0, //RUD_2_SRV_D,  // Derivative Gain
@@ -114,7 +114,7 @@ PidController rudderController241X(RUD_2_SRV_P,  // Proportional Gain
                                    3,            // Maximum Derivative Error
                                    5,            // Maximum Integral Term
                                    5);           // Maximum Derivative Term                                  
-
+*/
 PidController airspeedController241X(SPD_2_SRV_P, // Proportional Gain
                                      SPD_2_SRV_I, // Integral Gain
                                      SPD_2_SRV_D, // Derivative Gain
@@ -191,7 +191,7 @@ static void AA241X_AUTO_FastLoop(void)
     // Just switched to AUTO, initialize all controller loops
     rollController241X.Initialize(RLL_2_SRV_P, RLL_2_SRV_I, RLL_2_SRV_D);
     pitchController241X.Initialize(PTCH_2_SRV_P, PTCH_2_SRV_I, PTCH_2_SRV_D);
-    rudderController241X.Initialize(RUD_2_SRV_P, RUD_2_SRV_I, 0.0 /*RUD_2_SRV_D*/);
+    //rudderController241X.Initialize(RUD_2_SRV_P, RUD_2_SRV_I, 0.0 /*RUD_2_SRV_D*/);
     airspeedController241X.Initialize(SPD_2_SRV_P, SPD_2_SRV_I, SPD_2_SRV_D);
     headingController241X.Initialize(HEAD_2_SRV_P, HEAD_2_SRV_I, HEAD_2_SRV_D);
     altitudeController241X.Initialize(ALT_HOLD_P, 0.0 /*ALT_HOLD_I*/ , 0.0 /*ALT_HOLD_D*/ );
@@ -447,29 +447,33 @@ static void AA241X_AUTO_MediumLoop(void)
   // Time between function calls
   float delta_t = (CPU_time_ms - Last_AUTO_stampTime_ms); // Get delta time between AUTO_FastLoop calls  
   
+  
   // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
   if (delta_t > 100)
   {
     // Determine route number from bits in parameter list
-    if (ROUTE_NUMBER > 0.5 && ROUTE_NUMBER < 1.5) {
+    if (ROUTE_NUMBER > 0.5 && ROUTE_NUMBER < 1.5) 
+    {
       routeNumber = 1;
     }
-    else if (ROUTE_NUMBER > 1.5 && ROUTE_NUMBER < 2.5) {
+    else if (ROUTE_NUMBER > 1.5 && ROUTE_NUMBER < 2.5) 
+    {
       routeNumber = 2;
     }
     
     // Initialize route
-    routeManager.Initialize(routeNumber);
+    //routeManager.Initialize(routeNumber);
   }
   
   // Determine heading command based on specified route and current position
   if (controlMode == WAYPOINT_NAV) {
     if (gpsOK == true)
     {
-      headingCommand = routeManager.GetHeadingCommand();
-      hal.console->printf_P(PSTR("\n headingCommand: %f \n"), headingCommand);
+      //headingCommand = routeManager.GetHeadingCommand();
+      hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
     }
   }
+  
 };
 
 
@@ -479,6 +483,7 @@ static void AA241X_AUTO_MediumLoop(void)
 // *****   AA241X Slow Loop - @ ~1Hz  *****  //
 static void AA241X_AUTO_SlowLoop(void)
 {  
+  /*
   controller_summary RollControllerSummary = rollController241X.GetControllerSummary();
   controller_summary PitchControllerSummary = pitchController241X.GetControllerSummary();
   controller_summary HeadingControllerSummary = headingController241X.GetControllerSummary();    
@@ -487,7 +492,7 @@ static void AA241X_AUTO_SlowLoop(void)
   hal.console->printf_P(PSTR("\n Avg dT: %f \n"), delta_t_avg);
   hal.console->printf_P(PSTR("\n Control Mode: %lu \n"), controlMode);
   
-  /*
+  
   // Debug Statements
   hal.console->printf_P(PSTR("\n Roll Value: %f \n"), roll);  
   hal.console->printf_P(PSTR("\n Roll Error: %f \n"), RollControllerSummary.error);
@@ -499,7 +504,7 @@ static void AA241X_AUTO_SlowLoop(void)
   hal.console->printf_P(PSTR("Roll Output: %f \n"), RollControllerSummary.output);  
 
   hal.console->printf_P(PSTR("\n Pitch Value: %f \n"), pitch);
-  hal.console->printf_P(PSTR("\n Pitch Command: %f \n"), pitch_command);
+  hal.console->printf_P(PSTR("\n Pitch Command: %f \n"), pitchCommand);
   hal.console->printf_P(PSTR("\n Pitch Error: %f \n"), PitchControllerSummary.error);
   hal.console->printf_P(PSTR("Pitch Integrated Error: %f \n"), PitchControllerSummary.i_error);
   hal.console->printf_P(PSTR("Pitch Derivative Error: %f \n"), PitchControllerSummary.d_error);
@@ -511,9 +516,9 @@ static void AA241X_AUTO_SlowLoop(void)
   hal.console->printf_P(PSTR("\n RC_roll: %f \n"), RC_roll);
   hal.console->printf_P(PSTR("RC_pitch: %f \n"), RC_pitch);
   hal.console->printf_P(PSTR("RC_rudder: %f \n"), RC_rudder);
-  */
   
-  /*
+  
+  
   hal.console->printf_P(PSTR("\n Heading Command: %f \n"), headingCommand);
   hal.console->printf_P(PSTR("Current Heading: %f \n"), ground_course);
   hal.console->printf_P(PSTR("Heading Error: %f \n"), HeadingControllerSummary.error);
@@ -525,26 +530,27 @@ static void AA241X_AUTO_SlowLoop(void)
   hal.console->printf_P(PSTR("Heading Output: %f \n"), HeadingControllerSummary.output);
   hal.console->printf_P(PSTR("Bank Angle Command: %f \n"), headingControllerOut);
   hal.console->printf_P(PSTR("Bank Angle Current: %f \n"), roll);  
+  
+  
+  hal.console->printf_P(PSTR("\n Airspeed Value: %f \n"), Air_speed);
+  hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);
+  hal.console->printf_P(PSTR("Airspeed Error: %f \n"), AirspeedControllerSummary.error);
+  hal.console->printf_P(PSTR("Airspeed Integrated Error: %f \n"), AirspeedControllerSummary.i_error);
+  hal.console->printf_P(PSTR("Airspeed Derivative Error: %f \n"), AirspeedControllerSummary.d_error);
+  hal.console->printf_P(PSTR("Airspeed Proportional Term: %f \n"), AirspeedControllerSummary.p_term);
+  hal.console->printf_P(PSTR("Airspeed Integral Term: %f \n"), AirspeedControllerSummary.i_term);
+  hal.console->printf_P(PSTR("Airspeed Derivative Term: %f \n"), AirspeedControllerSummary.d_term);
+  hal.console->printf_P(PSTR("Airspeed Output: %f \n"), AirspeedControllerSummary.output);
+  hal.console->printf_P(PSTR("Throttle Trim: %f \n"), RC_Throttle_Trim);
+  hal.console->printf_P(PSTR("Airspeed Controller Out: %f \n"), airspeedControllerOut);
+  
+  hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
+  hal.console->printf_P(PSTR("Altitude Command: %f \n"), altitudeCommand);
+  hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);  
+  hal.console->printf_P(PSTR("fabs(RC_roll - RC_Roll_Trim): %f \n"), fabs(RC_roll - RC_Roll_Trim) );
+  hal.console->printf_P(PSTR("pitchCommand: %f \n"), pitchCommand);
+  hal.console->printf_P(PSTR("rollCommand: %f \n"), rollCommand);
   */
-  
-  //hal.console->printf_P(PSTR("\n Airspeed Value: %f \n"), Air_speed);
-  //hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);
-  //hal.console->printf_P(PSTR("Airspeed Error: %f \n"), AirspeedControllerSummary.error);
-  //hal.console->printf_P(PSTR("Airspeed Integrated Error: %f \n"), AirspeedControllerSummary.i_error);
-  //hal.console->printf_P(PSTR("Airspeed Derivative Error: %f \n"), AirspeedControllerSummary.d_error);
-  //hal.console->printf_P(PSTR("Airspeed Proportional Term: %f \n"), AirspeedControllerSummary.p_term);
-  //hal.console->printf_P(PSTR("Airspeed Integral Term: %f \n"), AirspeedControllerSummary.i_term);
-  //hal.console->printf_P(PSTR("Airspeed Derivative Term: %f \n"), AirspeedControllerSummary.d_term);
-  //hal.console->printf_P(PSTR("Airspeed Output: %f \n"), AirspeedControllerSummary.output);
-  //hal.console->printf_P(PSTR("Throttle Trim: %f \n"), RC_Throttle_Trim);
-  //hal.console->printf_P(PSTR("Airspeed Controller Out: %f \n"), airspeedControllerOut);
-  
-  //hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
-  //hal.console->printf_P(PSTR("Altitude Command: %f \n"), altitudeCommand);
-  //hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);  
-  //hal.console->printf_P(PSTR("fabs(RC_roll - RC_Roll_Trim): %f \n"), fabs(RC_roll - RC_Roll_Trim) );
-  //hal.console->printf_P(PSTR("pitchCommand: %f \n"), pitchCommand);
-  //hal.console->printf_P(PSTR("rollCommand: %f \n"), rollCommand);
 };
 
 /**** Limit function to not exceed mechanical limits of the servos ****/

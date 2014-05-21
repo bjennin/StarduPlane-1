@@ -9,11 +9,13 @@ class RouteManager
   protected:
     // Route Number
     uint32_t routeNumber;
-    static const uint32_t TURN_15DEG = 1;
-    static const uint32_t TURN_45DEG = 2;
+    //static const uint32_t TURN_15DEG = 1;
+    //static const uint32_t TURN_45DEG = 2;
+    const uint32_t TURN_15DEG = 1;
+    const uint32_t TURN_45DEG = 2;
     
     // Route Information
-    Route route;
+    Route mRoute;                              // Pointer to singleton instance of route
   
   public:
     RouteManager();                            // Constructor
