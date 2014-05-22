@@ -415,16 +415,6 @@ static void AA241X_AUTO_MediumLoop(void)
   // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
   if (delta_t > 100)
   {
-    // Initialize waypoint data (15 degree route)
-    waypoints[0][0] = 150.0;   waypoints[0][1] = -100.0;
-    waypoints[1][0] = 0.0;     waypoints[1][1] = -100.0;
-    waypoints[2][0] = -150.0;  waypoints[2][1] = -100.0 + 150.0*tan(15*PI/180);
-    
-    // Initialize waypoint data (45 degree route)
-    //waypoints[0][0] = 100.0;  waypoints[0][1] = -150.0;
-    //waypoints[1][0] = -50.0;  waypoints[1][1] = 0.0;
-    //waypoints[2][0] = -50.0;  waypoints[2][1] = 150.0;
-    
     // Compute waypoint headings
     float dx = waypoints[0][0] - X_position;
     float dy = waypoints[0][1] - Y_position;
