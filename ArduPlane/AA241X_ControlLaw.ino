@@ -22,7 +22,7 @@ static uint32_t   controlMode = 1; // Determine automatic control mode
 
 /**** State Variables ****/
 static float altitudeCommand  = 50;   // 50 meters is default altitude
-static float airspeedCommand  = 9;   // 9 meters / second is default airspeed
+static float airspeedCommand  = 11;   // 11 meters / second is default airspeed
 static float headingCommand   = 0;    // Go North
 static float rollCommand      = 0;    // Keep Level
 static float pitchCommand     = (THETA_COMMAND/180.0)*PI; //.075; // 4.5 degrees pitch
@@ -167,13 +167,13 @@ static void AA241X_AUTO_FastLoop(void)
     altitudeController241X.Initialize(ALT_HOLD_P, 0.0 /*ALT_HOLD_I*/ , 0.0 /*ALT_HOLD_D*/ );
     
     // Save all initial settings
-    if(gpsOK == true){
+    //if(gpsOK == true){
       altitudeCommand = -Z_position_GPS;
       altitudeController241X.SetReference(altitudeCommand);
-    }else{
-      altitudeCommand = -Z_position_Baro;
-      altitudeController241X.SetReference(altitudeCommand);
-    }
+    //}else{
+      //altitudeCommand = -Z_position_Baro;
+      //altitudeController241X.SetReference(altitudeCommand);
+    //}
     
     headingCommand = ground_course;
     headingController241X.SetReference(headingCommand);
@@ -198,8 +198,10 @@ static void AA241X_AUTO_FastLoop(void)
     }else if(MODE_SELECT > 5.5 && MODE_SELECT < 6.5){
       controlMode = WAYPOINT_NAV;
       
+      airspeedCommand = 11.0;
       // Mission Planner based pitch command until trim settings determined
-      pitchCommand = (THETA_COMMAND/180.0)*PI;
+      // pitchCommand = (THETA_COMMAND/180.0)*PI;
+      
     }
     
     // Set RC old values to trim state to capture deltas
@@ -210,6 +212,7 @@ static void AA241X_AUTO_FastLoop(void)
     
   }
   
+  /*
   // Determine Inner Loop Commands Based on Control Mode
   if (controlMode == ROLL_STABILIZE_MODE)
   {
@@ -335,7 +338,8 @@ static void AA241X_AUTO_FastLoop(void)
       pitchController241X.SetReference(pitchCommand);
       pitchControllerOut = pitchController241X.Step(delta_t, pitch);
   }
-  else if (controlMode == WAYPOINT_NAV)
+  else if (controlMode == WAYPOINT_NAV)*/
+  if (controlMode == WAYPOINT_NAV)
   {
     // headingCommand should be updated by the waypoint nav functions called in the medium loop  
     headingController241X.SetReference(headingCommand);
@@ -349,9 +353,33 @@ static void AA241X_AUTO_FastLoop(void)
     rollControllerOut = rollController241X.Step(delta_t, roll);
     
     // Pitch Commands
-    pitchCommand = (RC_pitch - RC_Pitch_Trim)*0.01*PI/4.0 + (THETA_COMMAND/180.0)*PI;
-    pitchController241X.SetReference(pitchCommand);
-    pitchControllerOut = pitchController241X.Step(delta_t, pitch);
+//    pitchCommand = (RC_pitch - RC_Pitch_Trim)*0.01*PI/4.0 + (THETA_COMMAND/180.0)*PI;
+//    pitchController241X.SetReference(pitchCommand);
+//    pitchControllerOut = pitchController241X.Step(delta_t, pitch);
+   
+      float altitude = -Z_position_GPS;
+      
+      /*
+      if(fabs(RC_pitch - RC_Pitch_Trim) > 5)
+      {
+        altitudeCommand += 0.04*(RC_pitch - RC_Pitch_Trim)/RC_Pitch_Trim; // 2 m/s change rate based on 50 Hz
+        altitudeController241X.SetReference(altitudeCommand);
+      }
+      */
+      
+      altitudeControllerOut = altitudeController241X.Step(delta_t, altitude);
+      Limit(altitudeControllerOut, pitchAngleMax, pitchAngleMin);
+      
+      // Pitch Commands
+      pitchController241X.SetReference(altitudeControllerOut);
+      pitchControllerOut = pitchController241X.Step(delta_t, pitch);
+      
+      // Airspeed Commands
+      //airspeedCommand += 0.1*(RC_throttle - RC_throttle_old);
+      //RC_throttle_old = RC_throttle;
+      //Limit(airspeedCommand, airspeedCommandMax, airspeedCommandMin);
+      //airspeedController241X.SetReference(airspeedCommand);
+      airspeedControllerOut = airspeedController241X.Step(delta_t, Air_speed);
         
   }
   
@@ -392,7 +420,7 @@ static void AA241X_AUTO_FastLoop(void)
   }
   
   // Update Throttle PWM Command
-  if(controlMode == FBW_MODE)
+  if(controlMode == FBW_MODE || controlMode == WAYPOINT_NAV)
   {
     float throttleOut = RC_throttle + airspeedControllerOut;
     Limit(throttleOut, throttleMin, throttleMax);

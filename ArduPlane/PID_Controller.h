@@ -29,7 +29,7 @@ class PidController
     void SetReference(float reference);
     
     // Get some values of the controller terms
-    controller_summary GetControllerSummary(void);
+    //controller_summary GetControllerSummary(void);
     
     // Reset the standing error values
     void Reset(void);

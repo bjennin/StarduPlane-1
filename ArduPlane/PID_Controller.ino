@@ -90,12 +90,13 @@ void PidController::SetReference(float reference)
 {
   mReference = reference;
 }
-
+/*
 // Return the controller summary
 controller_summary PidController::GetControllerSummary(void)
 {
   return mControllerSummary;
 }
+*/
 
 // Limit the value of a variable based on a maximum
 void PidController::Limit(float &variable, float maximum)

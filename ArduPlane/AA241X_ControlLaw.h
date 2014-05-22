@@ -36,15 +36,15 @@
 #define AA241X_8_DEFAULT  1.0 
 // My parameter 9
 #define SPD_2_SRV_P       g.aa241x_9
-#define AA241X_9_NAME     "AA241_Thr_P" 
+#define AA241X_9_NAME     "AA241_Spd_P" 
 #define AA241X_9_DEFAULT  1.0 
 // My parameter 10
 #define SPD_2_SRV_I        g.aa241x_10
-#define AA241X_10_NAME     "AA241_Thr_I" 
+#define AA241X_10_NAME     "AA241_Spd_I" 
 #define AA241X_10_DEFAULT  0.0 
 // My parameter 11
 #define SPD_2_SRV_D        g.aa241x_11
-#define AA241X_11_NAME     "AA241_Thr_D" 
+#define AA241X_11_NAME     "AA241_Spd_D" 
 #define AA241X_11_DEFAULT  0.0 
 // My parameter 12
 #define HEAD_2_SRV_P       g.aa241x_12
@@ -63,8 +63,8 @@
 #define AA241X_15_NAME     "AA241_Rud_P" 
 #define AA241X_15_DEFAULT  1.0 
 // My parameter 16
-#define RUD_2_SRV_I        g.aa241x_16
-#define AA241X_16_NAME     "AA241_Rud_I" 
+#define ALT_HOLD_I        g.aa241x_16
+#define AA241X_16_NAME     "AA241_Alt_I" 
 #define AA241X_16_DEFAULT  0.0 
 // My parameter 17
 #define POSITION_ERROR     g.aa241x_17
