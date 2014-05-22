@@ -456,7 +456,7 @@ static void AA241X_AUTO_MediumLoop(void)
     float dx = waypoints[0][0] - X_position;
     float dy = waypoints[0][1] - Y_position;
     Hwp[0] = atan2(dy,dx);
-    for (uint32_t i=1; i<Nwp; i++) {
+    for (int i=1; i<Nwp; i++) {
       dx = waypoints[i][0] - waypoints[i-1][0];
       dy = waypoints[i][1] - waypoints[i-1][1];
       Hwp[i] = atan2(dy,dx);
