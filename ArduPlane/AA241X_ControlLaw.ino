@@ -191,6 +191,12 @@ static void AA241X_AUTO_FastLoop(void)
     }else if(MODE_SELECT > 3.5 && MODE_SELECT < 4.5){
       controlMode = FBW_MODE;
       
+      // Set altitude as current altitude
+      altitudeCommand = -Z_position_GPS;
+      altitudeController241X.SetReference(altitudeCommand);
+      
+      airspeedCommand = 11.0; // Phase 1 nominal speed
+      
       // Mission Planner based pitch command rather than hard coded up top
       pitchCommand = (THETA_COMMAND/180.0)*PI;
     }else if(MODE_SELECT > 4.5 && MODE_SELECT < 5.5){
@@ -200,7 +206,7 @@ static void AA241X_AUTO_FastLoop(void)
       
       airspeedCommand = 11.0;
       // Mission Planner based pitch command until trim settings determined
-      // pitchCommand = (THETA_COMMAND/180.0)*PI;
+      pitchCommand = (THETA_COMMAND/180.0)*PI;
       
     }
     
@@ -262,7 +268,7 @@ static void AA241X_AUTO_FastLoop(void)
       rollController241X.SetReference(headingControllerOut);
       rollControllerOut = rollController241X.Step(delta_t, roll); 
       
-  }else if (controlMode == FBW_MODE)
+  }else */ if (controlMode == FBW_MODE)
   {
     // Maintain heading, altitude, and airspeed RC pilot commands offsets from saved initial conditions
       // Heading Commands
@@ -290,7 +296,8 @@ static void AA241X_AUTO_FastLoop(void)
       rollControllerOut = rollController241X.Step(delta_t, roll);
       
       // Altitude Commands
-      float altitude = 1; // Default altitude
+      float altitude = -Z_position_GPS; // Default altitude
+/*
       if(gpsOK == true)
         altitude = -Z_position_GPS;
       else
@@ -301,20 +308,22 @@ static void AA241X_AUTO_FastLoop(void)
         altitudeCommand += 0.04*(RC_pitch - RC_Pitch_Trim)/RC_Pitch_Trim; // 2 m/s change rate based on 50 Hz
         altitudeController241X.SetReference(altitudeCommand);
       }
+*/
       altitudeControllerOut = altitudeController241X.Step(delta_t, altitude);
       Limit(altitudeControllerOut, pitchAngleMax, pitchAngleMin);
       
       // Pitch Commands
-      pitchController241X.SetReference(altitudeControllerOut);
+      pitchController241X.SetReference(pitchCommand + altitudeControllerOut);
       pitchControllerOut = pitchController241X.Step(delta_t, pitch);
       
       // Airspeed Commands
-      airspeedCommand += 0.1*(RC_throttle - RC_throttle_old);
-      RC_throttle_old = RC_throttle;
-      Limit(airspeedCommand, airspeedCommandMax, airspeedCommandMin);
+//      airspeedCommand += 0.1*(RC_throttle - RC_throttle_old);
+//      RC_throttle_old = RC_throttle;
+//      Limit(airspeedCommand, airspeedCommandMax, airspeedCommandMin);
       airspeedController241X.SetReference(airspeedCommand);
       airspeedControllerOut = airspeedController241X.Step(delta_t, Air_speed);
   }
+  /*
   else if (controlMode == ATT_HOLD)
   {
       // Hold Roll Angle
@@ -339,7 +348,7 @@ static void AA241X_AUTO_FastLoop(void)
       pitchControllerOut = pitchController241X.Step(delta_t, pitch);
   }
   else if (controlMode == WAYPOINT_NAV)*/
-  if (controlMode == WAYPOINT_NAV)
+  else if (controlMode == WAYPOINT_NAV)
   {
     // headingCommand should be updated by the waypoint nav functions called in the medium loop  
     headingController241X.SetReference(headingCommand);
@@ -371,7 +380,7 @@ static void AA241X_AUTO_FastLoop(void)
       Limit(altitudeControllerOut, pitchAngleMax, pitchAngleMin);
       
       // Pitch Commands
-      pitchController241X.SetReference(altitudeControllerOut);
+      pitchController241X.SetReference(pitchCommand + altitudeControllerOut);
       pitchControllerOut = pitchController241X.Step(delta_t, pitch);
       
       // Airspeed Commands
@@ -471,7 +480,8 @@ static void AA241X_AUTO_MediumLoop(void)
 		hal.console->printf_P(PSTR("Position Error: %f \n"), pos_error);
 		if (pos_error <= POSITION_ERROR) {
 		  // Take a snapshot
-		  snapshot mySnapShot = takeASnapshot();
+/*		  
+                  snapshot mySnapShot = takeASnapshot();
 		  for (uint32_t i=0; i<Np; i++) {
 			// Check if person found
 			if (mySnapShot.personsInPicture[i] == 1) {
@@ -489,13 +499,13 @@ static void AA241X_AUTO_MediumLoop(void)
 			  }
 			}
 		  }
-		  
+*/		  
 		  // Go to next waypoint
 		  iwp++;
 		}
 		  
 		// If all waypoints complete, restart route
-		if (iwp == Nwp+1) {
+		if (iwp == Nwp) {
 		  iwp = 0;
 		  dx = waypoints[0][0] - X_position;
 		  dy = waypoints[0][1] - Y_position;
