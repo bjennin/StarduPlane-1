@@ -5,7 +5,6 @@
 #include "AA241X_aux.h"
 #include "PID_Controller.h"
 
-
 // Constructor for the PID controller class
 PidController::PidController(float PGain, float IGain, float DGain, float maxOutput, float maxIntError, float maxDerError, float maxIntTerm, float maxDerTerm)
               : mPGain(PGain),
