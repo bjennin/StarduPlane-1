@@ -7,6 +7,7 @@
 static char persons_found[Np] = {0,0,0,0};     // Number of persons found
 static uint32_t iwp = 0;                       // Waypoint iterator
 
+/*
 // Waypoint data for first part of mission
 #define Nwp 62
 static float waypoints[Nwp][Ndim] = {
@@ -73,6 +74,20 @@ static float waypoints[Nwp][Ndim] = {
 {  -9.7828,    3.8258},
 {   9.7828,   -3.8258}
 };
+*/
+
+// Waypoint data for octagon
+#define Nwp 8
+static float waypoints[Nwp][Ndim] = {
+{ 100.0,   50.0},
+{  50.0,  100.0},
+{ -50.0,  100.0},
+{-100.0,   50.0},
+{-100.0,  -50.0},
+{ -50.0, -100.0},
+{  50.0, -100.0},
+{ 100.0,  -50.0}
+};
 
 /*
 // Waypoint data for first 15 degree route
@@ -94,6 +109,7 @@ static float waypoints[Nwp][Ndim] = {
 };
 */
 
+// Waypoint headings
 static float Hwp[Nwp];
 
 // Wrap angle to interval [0,2*pi]
