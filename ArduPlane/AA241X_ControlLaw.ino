@@ -80,16 +80,16 @@ PidController pitchController241X(PTCH_2_SRV_P, // Proportional Gain
                                   3,            // Maximum Derivative Error
                                   5,            // Maximum Integral Term
                                   5);           // Maximum Derivative Term
-/*                                  
+                                  
 PidController rudderController241X(RUD_2_SRV_P,  // Proportional Gain
-                                   RUD_2_SRV_I,  // Integral Gain
+                                   0.0, //RUD_2_SRV_I,  // Integral Gain
                                    0.0, //RUD_2_SRV_D,  // Derivative Gain
                                    20,           // Maximum Controller Output
                                    1,            // Maximum Integral Error
                                    3,            // Maximum Derivative Error
                                    5,            // Maximum Integral Term
                                    5);           // Maximum Derivative Term                                  
-*/
+
 PidController airspeedController241X(SPD_2_SRV_P, // Proportional Gain
                                      SPD_2_SRV_I, // Integral Gain
                                      SPD_2_SRV_D, // Derivative Gain
@@ -161,7 +161,7 @@ static void AA241X_AUTO_FastLoop(void)
     // Just switched to AUTO, initialize all controller loops
     rollController241X.Initialize(RLL_2_SRV_P, RLL_2_SRV_I, RLL_2_SRV_D);
     pitchController241X.Initialize(PTCH_2_SRV_P, PTCH_2_SRV_I, PTCH_2_SRV_D);
-    //rudderController241X.Initialize(RUD_2_SRV_P, RUD_2_SRV_I, 0.0 /*RUD_2_SRV_D*/);
+    rudderController241X.Initialize(0.0 /*RUD_2_SRV_P*/,0.0 /*RUD_2_SRV_I*/, 0.0 /*RUD_2_SRV_D*/);
     airspeedController241X.Initialize(SPD_2_SRV_P, SPD_2_SRV_I, SPD_2_SRV_D);
     headingController241X.Initialize(HEAD_2_SRV_P, HEAD_2_SRV_I, HEAD_2_SRV_D);
     altitudeController241X.Initialize(ALT_HOLD_P, 0.0 /*ALT_HOLD_I*/ , 0.0 /*ALT_HOLD_D*/ );
@@ -218,7 +218,7 @@ static void AA241X_AUTO_FastLoop(void)
     
   }
   
-  /*
+  
   // Determine Inner Loop Commands Based on Control Mode
   if (controlMode == ROLL_STABILIZE_MODE)
   {
@@ -268,7 +268,7 @@ static void AA241X_AUTO_FastLoop(void)
       rollController241X.SetReference(headingControllerOut);
       rollControllerOut = rollController241X.Step(delta_t, roll); 
       
-  }else */ if (controlMode == FBW_MODE)
+  }else if (controlMode == FBW_MODE)
   {
     // Maintain heading, altitude, and airspeed RC pilot commands offsets from saved initial conditions
       // Heading Commands
@@ -607,14 +607,14 @@ static void AA241X_AUTO_SlowLoop(void)
   hal.console->printf_P(PSTR("Airspeed Output: %f \n"), AirspeedControllerSummary.output);
   hal.console->printf_P(PSTR("Throttle Trim: %f \n"), RC_Throttle_Trim);
   hal.console->printf_P(PSTR("Airspeed Controller Out: %f \n"), airspeedControllerOut);
-  
+  */
   hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
   hal.console->printf_P(PSTR("Altitude Command: %f \n"), altitudeCommand);
   hal.console->printf_P(PSTR("Airspeed Command: %f \n"), airspeedCommand);  
   hal.console->printf_P(PSTR("fabs(RC_roll - RC_Roll_Trim): %f \n"), fabs(RC_roll - RC_Roll_Trim) );
   hal.console->printf_P(PSTR("pitchCommand: %f \n"), pitchCommand);
   hal.console->printf_P(PSTR("rollCommand: %f \n"), rollCommand);
-  */
+  
 };
 
 /**** Limit function to not exceed mechanical limits of the servos ****/
