@@ -77,7 +77,7 @@
 // My parameter 19
 #define ROUTE_P            g.aa241x_19
 #define AA241X_19_NAME     "AA241_Rte_P" 
-#define AA241X_19_DEFAULT  1.0
+#define AA241X_19_DEFAULT  2.0
 // My parameter 20
 #define ROUTE_NUMBER       g.aa241x_20
 #define AA241X_20_NAME     "AA241_Rte_Num" 
