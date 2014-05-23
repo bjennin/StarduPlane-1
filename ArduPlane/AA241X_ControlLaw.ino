@@ -455,11 +455,12 @@ static void AA241X_AUTO_MediumLoop(void)
     // Compute waypoint headings
     float dx = waypoints[0][0] - X_position;
     float dy = waypoints[0][1] - Y_position;
-    Hwp[0] = atan2(dy,dx);
-    for (int i=1; i<Nwp; i++) {
+    Hwp[0] = WrapAngle(atan2f(dy,dx));
+    uint32_t i;
+    for (i=1; i<Nwp; i++) {
       dx = waypoints[i][0] - waypoints[i-1][0];
       dy = waypoints[i][1] - waypoints[i-1][1];
-      Hwp[i] = atan2(dy,dx);
+      Hwp[i] = WrapAngle(atan2f(dy,dx));
     }
     
     // Set waypoint iterator
@@ -470,73 +471,66 @@ static void AA241X_AUTO_MediumLoop(void)
   if (controlMode == WAYPOINT_NAV) {
     if (gpsOK == true)
     {
-		// Compute heading (UAV to waypoint)
-		float dx = waypoints[iwp][0] - X_position;
-		float dy = waypoints[iwp][1] - Y_position;
-		float Huav = atan2(dy,dx) + PI;
-		
-		// Check to see if waypoint is found
-		float pos_error = sqrt(dx*dx + dy*dy);
-		hal.console->printf_P(PSTR("Position Error: %f \n"), pos_error);
-		if (pos_error <= POSITION_ERROR) {
-		  // Take a snapshot
-/*		  
-                  snapshot mySnapShot = takeASnapshot();
-		  for (uint32_t i=0; i<Np; i++) {
-			// Check if person found
-			if (mySnapShot.personsInPicture[i] == 1) {
-			  persons_found[i] = 1;
-			  
-			  // Sum all persons found
-			  char sum = 0;
-			  for (uint32_t ii=0; ii<Np; ii++) {
-				sum += persons_found[ii];
-			  }
-			  
-			  // Set altitude command to 30 meters if all persons found
-			  if (sum == Np) {
-				altitudeCommand = 30.0;
-			  }
-			}
-		  }
-*/		  
-		  // Go to next waypoint
-		  iwp++;
-		}
-		  
-		// If all waypoints complete, restart route
-		if (iwp == Nwp) {
-		  iwp = 0;
-		  dx = waypoints[0][0] - X_position;
-		  dy = waypoints[0][1] - Y_position;
-		  Hwp[0] = atan2(dy,dx) + PI;
-		}
-			
-		// Compute heading (UAV to waypoint)
-		dx = waypoints[iwp][0] - X_position;
-		dy = waypoints[iwp][1] - Y_position;
-		Huav = atan2(dy,dx) + PI;
-		
-		// Compute heading error (rad)
-		float Herr = fabs(Huav - Hwp[iwp]);
-		
-		// Determine shortest angle and compute heading command
-		if (Herr < (2*PI - Herr)) {
-		  headingCommand = Hwp[iwp] + copysignf(1.0, Huav - Hwp[iwp])*ROUTE_P*Herr;
-		}
-		else {
-		  Herr = 2*PI - Herr;
-		  headingCommand = Hwp[iwp] - copysignf(1.0, Huav - Hwp[iwp])*ROUTE_P*Herr;
-		}
-		
-		// Check radian range of heading command
-		if(headingCommand > 2*PI) {
-		  headingCommand -= 2*PI;
-		}
-		else if(headingCommand < 0) {
-		  headingCommand += 2*PI;
-		}
-		hal.console->printf_P(PSTR("Heading Command: %f \n"), headingCommand);
+      // Check to see if waypoint is found
+      float dx = waypoints[iwp][0] - X_position;
+      float dy = waypoints[iwp][1] - Y_position;
+      float pos_error = sqrtf(dx*dx + dy*dy);
+      if (pos_error <= POSITION_ERROR) {
+        // Take a snapshot
+        snapshot mySnapShot = takeASnapshot();
+        uint32_t i;
+        for (i=0; i<Np; i++) {
+          // Check if person found
+          if (mySnapShot.personsInPicture[i] == 1) {
+            persons_found[i] = 1;
+            
+            // Sum all persons found
+            uint32_t ii;
+            char sum = 0;
+            for (ii=0; ii<Np; ii++) {
+              sum += persons_found[ii];
+            }
+            
+            // Set altitude command to 30 meters if all persons found
+            if (sum == Np) {
+              altitudeCommand = 30.0;
+            }
+          }
+        }
+        
+        // Go to next waypoint
+        iwp++;
+      }
+      
+      // If all waypoints complete, restart route
+      if (iwp == Nwp) {
+        iwp = 0;
+        dx = waypoints[0][0] - X_position;
+        dy = waypoints[0][1] - Y_position;
+        Hwp[0] = WrapAngle(atan2f(dy,dx));
+      }
+      
+      // Compute heading (UAV to waypoint)
+      dx = waypoints[iwp][0] - X_position;
+      dy = waypoints[iwp][1] - Y_position;
+      float Huav = WrapAngle(atan2f(dy,dx));
+      
+      // Compute heading error (rad)
+      float Herr = (float)fabs(Huav - Hwp[iwp]);
+      
+      // Determine shortest angle and compute heading command
+      if (Herr < (2*PI - Herr)) {
+        headingCommand = WrapAngle(Hwp[iwp] + copysignf(1.0, Huav - Hwp[iwp])*ROUTE_P*Herr);
+      }
+      else {
+        Herr = 2*PI - Herr;
+        headingCommand = WrapAngle(Hwp[iwp] - copysignf(1.0, Huav - Hwp[iwp])*ROUTE_P*Herr);
+      }
+      
+      // If Herr is too large, fly towards waypoint
+      if (Herr > PI/4) {
+        headingCommand = Huav;
+      }
     }
   }
 };
