@@ -450,8 +450,8 @@ static void AA241X_AUTO_MediumLoop(void)
   // Time between function calls
   float delta_t = (CPU_time_ms - Last_AUTO_stampTime_ms); // Get delta time between AUTO_FastLoop calls  
   
-  // Checking if we've just switched to AUTO. If more than 100ms have gone past since last time in AUTO, then we are definitely just entering AUTO
-  if (delta_t > 100)
+  // Checking if we've just switched to AUTO. If more than 1000ms have gone past since last time in AUTO, then we are definitely just entering AUTO
+  if (delta_t > 1000)
   {
     // Compute waypoint headings
     float dx = waypoints[0][0] - X_position;
